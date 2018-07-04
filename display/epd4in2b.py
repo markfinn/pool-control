@@ -112,7 +112,7 @@ class EPD:
         self.send_command(POWER_ON)
         self.wait_until_idle()
         self.send_command(PANEL_SETTING)
-        self.send_data(0x0F)        # LUT from OTP
+        self.send_data(0x1F)        # LUT from OTP
 
     def wait_until_idle(self):
         while(self.digital_read(self.busy_pin) == 0):      # 0: busy, 1: idle
