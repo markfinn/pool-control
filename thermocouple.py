@@ -33,10 +33,12 @@ class max6675(object):
         return self.temp
 
 
-s = max6675(1,1)
-va=0
-v=None
-while True:
+if __name__ == '__main__':
+
+  s = max6675(1,1)
+  va=0
+  v=None
+  while True:
     nv = s.read(True)
     va=nv+.1*.9*va
     print nv
