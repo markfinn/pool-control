@@ -113,6 +113,8 @@ class EPD:
         self.wait_until_idle()
         self.send_command(PANEL_SETTING)
         self.send_data(0x1F)        # LUT from OTP
+        self.send_command(VCOM_AND_DATA_INTERVAL_SETTING)
+        self.send_data(0x77)        # black borderd
 
     def wait_until_idle(self):
         while(self.digital_read(self.busy_pin) == 0):      # 0: busy, 1: idle
@@ -162,7 +164,7 @@ class EPD:
     # after this, call epd.init() to awaken the module
     def sleep(self):
         self.send_command(VCOM_AND_DATA_INTERVAL_SETTING)
-        self.send_data(0xF7)        # border floating
+        self.send_data(0x77)        # black borderd
         self.send_command(POWER_OFF)
         self.wait_until_idle()
         self.send_command(DEEP_SLEEP)
