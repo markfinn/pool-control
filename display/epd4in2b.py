@@ -73,12 +73,13 @@ READ_OTP_DATA                               = 0xA2
 POWER_SAVING                                = 0xE3
 
 class EPD:
-    def __init__(self):
+    def __init__(self, spiport=(0,0)):
         self.reset_pin = epdif.RST_PIN
         self.dc_pin = epdif.DC_PIN
         self.busy_pin = epdif.BUSY_PIN
         self.width = EPD_WIDTH
         self.height = EPD_HEIGHT
+        self.spiport = spiport
 
     def digital_write(self, pin, value):
         epdif.epd_digital_write(pin, value)
@@ -101,8 +102,13 @@ class EPD:
         # so use [data] instead of data
         epdif.spi_transfer([data])
 
+    def send_buffer(self, buffer):
+        self.digital_write(self.dc_pin, GPIO.HIGH)
+        for chunk in (buffer[i:i+1024] for i in xrange(0, len(buffer), 1024)):
+            epdif.spi_transfer(chunk)
+
     def init(self):
-        if (epdif.epd_init() != 0):
+        if (epdif.epd_init(self.spiport) != 0):
             return -1
         self.reset()
         self.send_command(BOOSTER_SOFT_START)
@@ -126,40 +132,67 @@ class EPD:
         self.digital_write(self.reset_pin, GPIO.HIGH)
         self.delay_ms(200)
 
-    def get_frame_buffer(self, image):
-        buf = [0xFF] * (self.width * self.height / 8)
-        # Set buffer to value of Python Imaging Library image.
-        # Image must be in mode 1.
-        image_monocolor = image.convert('1')
-        imwidth, imheight = image_monocolor.size
-        if imwidth != self.width or imheight != self.height:
-            raise ValueError('Image must be same dimensions as display \
-                ({0}x{1}).' .format(self.width, self.height))
+    def get_frame_window_buffer(self, image, box):
+      assert box[2]>box[0]
+      assert box[3]>box[1]
+      box = box[0]&0xff8, box[1], ((box[2])|7)+1, box[3]
+      print 'gfwb', box
+      i1 = image.crop(box)
+      bits = self.get_frame_buffer(i1)
+      return bits
 
-        pixels = image_monocolor.load()
-        for y in range(self.height):
-            for x in range(self.width):
-                # Set the bits for the column of pixels at the current position.
-                if pixels[x, y] == 0:
-                    buf[(x + y * self.width) / 8] &= ~(0x80 >> (x % 8))
+
+    def get_frame_buffer(self, image):
+        assert image.mode == '1'
+        imwidth, imheight = image.size
+        buf = [0] * (imwidth * imheight / 8)
+
+        pixels = image.getdata()
+        x=0
+        for i,p in enumerate(pixels):
+            x=(x<<1)|(1&p)
+            if i%8==7:
+                buf[i//8]=x
+                x=0
+
         return buf
 
-    def display_frame(self, frame_buffer_black, frame_buffer_red):
-        if (frame_buffer_black != None):
+
+    def _display_frame(self, frame_buffer_old, frame_buffer_new):
+        if (frame_buffer_old != None):
             self.send_command(DATA_START_TRANSMISSION_1)           
             self.delay_ms(2)
-            for i in range(0, self.width * self.height / 8):
-                self.send_data(frame_buffer_black[i])  
+            self.send_buffer(frame_buffer_old)
             self.delay_ms(2)                  
-        if (frame_buffer_red != None):
-            self.send_command(DATA_START_TRANSMISSION_2)
-            self.delay_ms(2)
-            for i in range(0, self.width * self.height / 8):
-                self.send_data(frame_buffer_red[i])  
-            self.delay_ms(2)        
+
+        self.send_command(DATA_START_TRANSMISSION_2)           
+        self.delay_ms(2)
+        self.send_buffer(frame_buffer_new)
+        self.delay_ms(2)                  
 
         self.send_command(DISPLAY_REFRESH)
         self.wait_until_idle()
+
+    def display_frame(self, frame_buffer_old, frame_buffer_new):
+        self.send_command(PARTIAL_OUT)           
+        self.delay_ms(2)
+        self._display_frame(frame_buffer_old, frame_buffer_new)
+
+    def display_frame_window(self, old, new, box):
+        print box,
+        box = box[0]&0xff8, box[1], box[2]|7, box[3]
+        print box, len(old), len(new)
+        self.send_command(PARTIAL_WINDOW)           
+        self.delay_ms(2)
+        for b in [box[0], box[2], box[1], box[3]]:
+            self.send_data(b>>8)  
+            self.send_data(b&255)  
+        self.send_data(0x00)       
+        self.delay_ms(2)
+        self.send_command(PARTIAL_IN)           
+        self.delay_ms(2)
+
+        self._display_frame(old, new)
 
     # after this, call epd.init() to awaken the module
     def sleep(self):

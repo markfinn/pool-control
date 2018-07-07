@@ -1,7 +1,6 @@
 import spidev
 import time
 
-
 class max6675(object):
     def __init__(self, bus, cs):
         self.spi = spidev.SpiDev()
@@ -20,6 +19,7 @@ class max6675(object):
     
             self.spi.max_speed_hz = 2000000
             self.spi.mode = 0b01
+
 
             v = self.spi.readbytes(2)
             self.lastread = time.time()
