@@ -1,4 +1,4 @@
-
+from __future__ import division
 import display
 import threading
 import time
@@ -70,6 +70,23 @@ class TextBox(Element):
   def draw(self, draw):
       display.textbox(draw, self.text, size=self.parent.size, center=self.parent.center, fill = 0)
     
+
+class Hgroup(Element):
+  def __init__(self, sizes):
+    t=sum(sizes)
+    p=self.parent.size[0]
+    self.sizes=[]
+    for s in sizes:
+      x=int(s/t*p+.5)
+      self.sizes.append(x)
+      p-=x
+      t-=s
+
+  def draw(self, draw):
+      display.textbox(draw, self.text, size=self.parent.size, center=self.parent.center, fill = 0)
+    
+
+
 
 
   
