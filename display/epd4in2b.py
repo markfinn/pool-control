@@ -136,7 +136,6 @@ class EPD:
       assert box[2]>box[0]
       assert box[3]>box[1]
       box = box[0]&0xff8, box[1], ((box[2])|7)+1, box[3]
-      print 'gfwb', box
       i1 = image.crop(box)
       bits = self.get_frame_buffer(i1)
       return bits
@@ -191,9 +190,7 @@ class EPD:
         self._display_frame(frame_buffer_old, frame_buffer_new, wait)
 
     def display_frame_window(self, old, new, box, wait=True):
-        print box,
         box = box[0]&0xff8, box[1], box[2]|7, box[3]
-        print box, len(old), len(new)
         self.send_command(PARTIAL_WINDOW)           
         self.delay_ms(2)
         for b in [box[0], box[2], box[1], box[3]]:
