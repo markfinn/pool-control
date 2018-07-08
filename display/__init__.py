@@ -38,7 +38,7 @@ class Screen(object):
     self.partials=0
 
   def _load(self, image, full=False, wait=True):
-    if self.partials > 5:
+    if self.partials > 100:
       full=True
 
     image = image.convert('1', dither=Image.FLOYDSTEINBERG)
@@ -48,16 +48,19 @@ class Screen(object):
       return
 
     if self.lastimage and not full:
+      self.epd.setQuick(True)
       diff = ImageMath.eval("a-b", a=self.lastimage, b=image)
       box = diff.getbbox()
       if box==None:
         return
+#      box=0,box[1],400,box[3]
       bits1 = self.epd.get_frame_window_buffer(self.lastimage, box)
       bits2 = self.epd.get_frame_window_buffer(image, box)
       self.epd.display_frame_window(bits1, bits2, box, wait)
       self.partials+=1
 
     else:
+      self.epd.setQuick(False)
       if self.lastimage:
         bits1 = self.epd.get_frame_buffer(self.lastimage)
       else:
