@@ -124,7 +124,7 @@ class EPD:
 
     def wait_until_idle(self):
         while(self.digital_read(self.busy_pin) == 0):      # 0: busy, 1: idle
-            self.delay_ms(100)
+            GPIO.wait_for_edge(self.busy_pin, GPIO.RISING, timeout=100)
 
     def reset(self):
         self.digital_write(self.reset_pin, GPIO.LOW)         # module reset
@@ -158,7 +158,7 @@ class EPD:
         return buf
 
 
-    def _display_frame(self, frame_buffer_old, frame_buffer_new):
+    def _display_frame(self, frame_buffer_old, frame_buffer_new, wait):
         if (frame_buffer_old != None):
             self.send_command(DATA_START_TRANSMISSION_1)           
             self.delay_ms(2)
@@ -171,14 +171,26 @@ class EPD:
         self.delay_ms(2)                  
 
         self.send_command(DISPLAY_REFRESH)
-        self.wait_until_idle()
+        if wait==True:
+            self.wait_until_idle()
+        elif wait:
+            hasrun=False
+            def cb(channel):
+                if not hasrun:
+                    GPIO.remove_event_detect(channel)
+                    hasrun=True
+                    wait()
+            GPIO.add_event_detect(self.busy_pin, GPIO.RISING)
+            GPIO.add_event_callback(self.busy_pin, cb)
+            if self.digital_read(self.busy_pin):
+                cb(self.busy_pin)
 
-    def display_frame(self, frame_buffer_old, frame_buffer_new):
+    def display_frame(self, frame_buffer_old, frame_buffer_new, wait=True):
         self.send_command(PARTIAL_OUT)           
         self.delay_ms(2)
-        self._display_frame(frame_buffer_old, frame_buffer_new)
+        self._display_frame(frame_buffer_old, frame_buffer_new, wait)
 
-    def display_frame_window(self, old, new, box):
+    def display_frame_window(self, old, new, box, wait=True):
         print box,
         box = box[0]&0xff8, box[1], box[2]|7, box[3]
         print box, len(old), len(new)
@@ -192,7 +204,7 @@ class EPD:
         self.send_command(PARTIAL_IN)           
         self.delay_ms(2)
 
-        self._display_frame(old, new)
+        self._display_frame(old, new, wait)
 
     # after this, call epd.init() to awaken the module
     def sleep(self):

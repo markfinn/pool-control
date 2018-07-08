@@ -32,7 +32,7 @@ class Screen(object):
     self.lastimage=None
     self.partials=0
 
-  def _load(self, image, full=False):
+  def _load(self, image, full=False, wait=True):
     if self.partials > 5:
       full=True
 
@@ -45,7 +45,7 @@ class Screen(object):
         return
       bits1 = self.epd.get_frame_window_buffer(self.lastimage, box)
       bits2 = self.epd.get_frame_window_buffer(image, box)
-      self.epd.display_frame_window(bits1, bits2, box)
+      self.epd.display_frame_window(bits1, bits2, box, wait)
       self.partials+=1
 
     else:
@@ -55,21 +55,27 @@ class Screen(object):
         bits1 = None
       bits2 = self.epd.get_frame_buffer(image)
 
-      self.epd.display_frame(bits1, bits2)
+      self.epd.display_frame(bits1, bits2, wait)
       self.partials=0
     self.lastimage=image
 
 
-  def refresh(self, full=False):
+  def refresh(self, full=False, wait=True):
       image = Image.new('L', (epd4in2b.EPD_WIDTH, epd4in2b.EPD_HEIGHT), 255)
       draw = ImageDraw.Draw(image)
       self.draw(draw)
-      self._load(image, full)
+      self._load(image, full, wait)
       image.show()
 
 
   def draw(self, draw):
       textbox(draw, "Hello, World!", size=(200,200), center=(200,150), fill = 0)
+
+
+  @property
+  def size(self):
+    return epd4in2b.EPD_WIDTH, epd4in2b.EPD_HEIGHT
+
 
 if __name__ == '__main__':
     s=Screen((1,0))

@@ -1,5 +1,8 @@
 import spidev
 import time
+import traceback
+import threading
+import sys
 
 class max6675(object):
     def __init__(self, bus, cs):
@@ -11,11 +14,12 @@ class max6675(object):
 
         now = time.time()
         if wait:
-            while self.lastread != None and self.lastread + .33 >= now:
+            while self.lastread != None and self.lastread + .33 > now:
+              time.sleep(self.lastread+.33 - now)
               now = time.time()
 
         
-        if self.lastread == None or self.lastread + .33 < now:
+        if self.lastread == None or self.lastread + .33 <= now:
     
             self.spi.max_speed_hz = 2000000
             self.spi.mode = 0b01
@@ -32,6 +36,20 @@ class max6675(object):
 
         return self.temp
 
+
+
+    def _report(self, callback):
+        while True:
+            v = self.read(True)
+            try:
+                callback(v)
+            except:
+                traceback.print_exc(file=sys.stderr)
+                
+    def report(self, callback):
+        t = threading.Thread(target=self._report, args=(callback,), name='max6675_report')
+        t.daemon=True
+        t.start()
 
 if __name__ == '__main__':
 
