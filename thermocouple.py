@@ -10,7 +10,7 @@ class max6675(object):
         else:
             import spidev
             self.spi = spidev.SpiDev()
-            self.spi.open(bus, cs)
+            self.spi.open(spi[0], spi[1])
         self.lastread = None
 
     def read(self, wait=False):

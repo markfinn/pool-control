@@ -72,7 +72,9 @@ POWER_SAVING                                = 0xE3
 
 class EPD:
     def __init__(self, spiport=(0,0)):
+        global epdif
         import epdif
+        global GPIO
         import RPi.GPIO as GPIO
 
         self.reset_pin = epdif.RST_PIN

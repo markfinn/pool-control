@@ -76,7 +76,7 @@ class Screen(object):
 
 
   def draw(self, draw):
-      textbox(draw, "Hello, World!", size=(200,200), center=(200,150), fill = 0)
+      textbox(draw, "Hello, World!\n (you should subclass me)", size=(200,200), center=(200,150), fill = 0)
 
 
   @property
@@ -87,3 +87,4 @@ class Screen(object):
 if __name__ == '__main__':
     s=Screen((1,0))
     s.refresh()
+

@@ -44,7 +44,7 @@ class Container(object):
     c.parent = self
 
 
-class GuiScreen(display.Screen, Container, Element):
+class GuiScreen(Container, display.Screen, Element):
   def __init__(self, spi):
     display.Screen.__init__(self, spi)
     Container.__init__(self)
@@ -119,7 +119,7 @@ class GroupMember(Container, Element):
 
 class Group(Element):
   def __init__(self):
-    raise NotImplemented()
+      raise NotImplemented()
 
   @staticmethod
   def makesizes(sizes, psize):
@@ -127,10 +127,12 @@ class Group(Element):
     psize
     outsizes=[]
     for s in sizes:
-      x=int(s/t*psizes+.5)
+      x=int(s/t*psize+.5)
       outsizes.append(x)
-      psizes-=x
+      psize-=x
       t-=s
+    return outsizes
+
 
   def getMember(self, i):
     return self.members[i]
@@ -142,11 +144,21 @@ class Group(Element):
       except:
          traceback.print_exc(file=sys.stderr)
 
+  @property
+  def sizes(self):
+    try:
+      return self._sizes
+    except AttributeError:
+      self._sizes = self._calcsizes()
+      return self._sizes
 
 class HGroup(Group):
   def __init__(self, sizes):
-    self.sizes = self.makesizes(sizes, self.parent.size[0])
-    self.members=[GroupMember(self, i) for i in xrange(len(self.sizes))]
+    self.members=[GroupMember(self, i) for i in xrange(len(sizes))]
+    self.rawsizes = sizes
+
+  def _calcsizes(self):
+     return self.makesizes(self.rawsizes, self.parent.size[0])
 
   def posOf(self, i):
     return self.pos[0]+sum(self.sizes[:i]), self.pos[1]
@@ -157,8 +169,11 @@ class HGroup(Group):
 
 class VGroup(Group):
   def __init__(self, sizes):
-    self.sizes = self.makesizes(sizes, self.parent.size[1])
-    self.members=[GroupMember(self, i) for i in xrange(len(self.sizes))]
+    self.members=[GroupMember(self, i) for i in xrange(len(sizes))]
+    self.rawsizes = sizes
+
+  def _calcsizes(self):
+     return self.makesizes(self.rawsizes, self.parent.size[1])
 
   def posOf(self, i):
     return self.pos[0], self.pos[1]+sum(self.sizes[:i])
@@ -166,12 +181,6 @@ class VGroup(Group):
   def sizeOf(self, i):
     return self.size[0],self.sizes[i]
 
-
-
-
-
-
-  
 
 def main():
     g=GuiScreen((1,0))
