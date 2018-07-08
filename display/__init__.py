@@ -26,9 +26,12 @@ def textbox(draw, text, size, fill=128, center=None, corner=None, align='center'
 
 class Screen(object):
   def __init__(self, spi):
-    epd = epd4in2b.EPD(spi)
-    epd.init()
-    self.epd=epd
+    if spi==None:#dummy disply, not on rpi
+      self.epd=None
+    else:
+      epd = epd4in2b.EPD(spi)
+      epd.init()
+      self.epd=epd
     self.lastimage=None
     self.partials=0
 
@@ -37,6 +40,10 @@ class Screen(object):
       full=True
 
     image = image.convert('1', dither=Image.FLOYDSTEINBERG)
+
+    if self.epd==None:#dummy
+      image.show()
+      return
 
     if self.lastimage and not full:
       diff = ImageMath.eval("a-b", a=self.lastimage, b=image)

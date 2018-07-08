@@ -24,9 +24,7 @@
  # THE SOFTWARE.
  #
 
-import epdif
 import Image
-import RPi.GPIO as GPIO
 
 # Display resolution
 EPD_WIDTH       = 400
@@ -74,6 +72,9 @@ POWER_SAVING                                = 0xE3
 
 class EPD:
     def __init__(self, spiport=(0,0)):
+        import epdif
+        import RPi.GPIO as GPIO
+
         self.reset_pin = epdif.RST_PIN
         self.dc_pin = epdif.DC_PIN
         self.busy_pin = epdif.BUSY_PIN

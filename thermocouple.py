@@ -1,13 +1,16 @@
-import spidev
 import time
 import traceback
 import threading
 import sys
 
 class max6675(object):
-    def __init__(self, bus, cs):
-        self.spi = spidev.SpiDev()
-        self.spi.open(bus, cs)
+    def __init__(self, spi):
+        if spi==None:#dummy, not on rpi
+            self.spi=None
+        else:
+            import spidev
+            self.spi = spidev.SpiDev()
+            self.spi.open(bus, cs)
         self.lastread = None
 
     def read(self, wait=False):
@@ -20,6 +23,9 @@ class max6675(object):
 
         
         if self.lastread == None or self.lastread + .33 <= now:
+            if self.spi==None:#dummy
+                self.temp = 20.0
+                return self.temp
     
             self.spi.max_speed_hz = 2000000
             self.spi.mode = 0b01
