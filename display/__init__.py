@@ -11,6 +11,8 @@ def textbox(draw, text, size, fill=128, center=None, corner=None, align='center'
     pt=96
     font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSansBold.ttf', pt)
     h,w = draw.multiline_textsize(text, font = font)
+    if h==0 or w==0:
+      return
     if size[0]:
         s=size[0]/h
     if size[1]:
