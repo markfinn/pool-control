@@ -4,6 +4,7 @@ import threading
 import time
 import traceback
 import sys
+import contextlib
 
 
 class Element(object):
@@ -14,11 +15,39 @@ class Element(object):
   def center(self):
       return self.pos[0]+self.size[0]/2,self.pos[1]+self.size[1]/2
 
+  @property
+  def pos(self):
+    return self.parent.pos
 
-class GuiScreen(display.Screen, Element):
-  def __init__(self, spi):
-    super(GuiScreen, self).__init__(spi)
+  @property
+  def size(self):
+    return self.parent.size
+
+  @property
+  def refreshHold(self):
+    return self.parent.refreshHold
+
+
+class Container(object):
+  def __init__(self):
     self.children=[]
+
+  def draw(self, draw):
+    for c in self.children:
+      try:
+        c.draw(draw)
+      except:
+         traceback.print_exc(file=sys.stderr)  
+    
+  def add(self, c):
+    self.children.append(c)
+    c.parent = self
+
+
+class GuiScreen(display.Screen, Container, Element):
+  def __init__(self, spi):
+    display.Screen.__init__(self, spi)
+    Container.__init__(self)
     self.refreshneeded=False
     self.refreshcond = threading.Condition()
     self.refreshing = threading.RLock()
@@ -47,16 +76,14 @@ class GuiScreen(display.Screen, Element):
         self.refreshneeded=True
         self.refreshcond.notifyAll()
 
-  def draw(self, draw):
-    for c in self.children:
-      try:
-        c.draw(draw)
-      except:
-         traceback.print_exc(file=sys.stderr)  
-    
-  def add(self, c):
-    self.children.append(c)
-    c.parent = self
+
+  @property
+  @contextlib.contextmanager
+  def refreshHold(self):
+    self.refreshing.acquire()
+    yield self
+    self.refreshing.release()
+
 
 
 
