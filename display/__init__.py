@@ -73,11 +73,10 @@ class Screen(object):
 
 
   def refresh(self, full=False, wait=True):
-      image = Image.new('L', (epd4in2b.EPD_WIDTH, epd4in2b.EPD_HEIGHT), 255)
+      image = Image.new('L', self.size, 255)
       draw = ImageDraw.Draw(image)
       self.draw(draw)
       self._load(image, full, wait)
-      image.show()
 
 
   def draw(self, draw):

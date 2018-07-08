@@ -1,13 +1,15 @@
-
+import sys
 import gui
 import thermocouple
 import clock
 import time
 
 
-def main():
-    g=gui.GuiScreen((1,0))
-#    g=gui.GuiScreen(None)
+def main(dummy):
+    if not dummy:
+      g=gui.GuiScreen((1,0))
+    else:
+      g=gui.GuiCurses(dummy['win'])
 
 
     with g.refreshHold:
@@ -31,8 +33,10 @@ def main():
         with t1.refreshHold:
           t1.text='%2.1f'%(temp*9.0/5.0+32)
         t1.refresh()
-      ts = thermocouple.max6675((0,0))
-#      ts = thermocouple.max6675(None)
+      if not dummy:
+        ts = thermocouple.max6675((0,0))
+      else:
+        ts = thermocouple.max6675(None)
       ts.report(cb1)
 
 
@@ -55,6 +59,14 @@ def main():
         break
 
 if __name__ == '__main__':
-    main()
+    if 'dummy' in sys.argv:
+        global curses
+        import curses
+        def dummyfunc(win):
+          dummy={'win':win}
+          main(dummy)
+        curses.wrapper(dummyfunc)
+    else:
+        main(None)
 
 

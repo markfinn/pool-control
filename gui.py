@@ -44,10 +44,8 @@ class Container(object):
     c.parent = self
 
 
-class GuiScreen(Container, display.Screen, Element):
-  def __init__(self, spi):
-    display.Screen.__init__(self, spi)
-    Container.__init__(self)
+class GuiBase(object):
+  def __init__(self):
     self.refreshneeded=False
     self.refreshcond = threading.Condition()
     self.refreshing = threading.RLock()
@@ -67,7 +65,7 @@ class GuiScreen(Container, display.Screen, Element):
         self.refreshneeded=False
       with self.refreshing: 
         try:
-          super(GuiScreen, self).refresh(wait=True)
+          self._refresh(wait=True)
         except:
            traceback.print_exc(file=sys.stderr)  
 
@@ -85,6 +83,44 @@ class GuiScreen(Container, display.Screen, Element):
     self.refreshing.release()
 
 
+
+
+
+
+class GuiScreen(GuiBase, Container, display.Screen, Element):
+  def __init__(self, spi):
+    display.Screen.__init__(self, spi)
+    Container.__init__(self)
+    GuiBase.__init__(self)
+
+  def _refresh(self, wait):
+    display.Screen.refresh(self, wait=wait)
+
+
+
+class GuiCurses(GuiBase, Container, Element):
+  def __init__(self, win):
+    global Image
+    import Image
+    global ImageDraw
+    import ImageDraw
+    global curses
+    import curses
+    Container.__init__(self)
+    GuiBase.__init__(self)
+    self.win=win
+    curses.curs_set(0)
+
+  @property
+  def size(self):
+    return 400, 300
+
+
+  def _refresh(self, wait):
+      image = Image.new('L', self.size, 255)
+      draw = ImageDraw.Draw(image)
+      self.draw(draw)
+      print self.win.getbegyx(), self.win.getmaxyx()
 
 
 
