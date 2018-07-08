@@ -98,20 +98,75 @@ class TextBox(Element):
       display.textbox(draw, self.text, size=self.parent.size, center=self.parent.center, fill = 0)
     
 
-class Hgroup(Element):
-  def __init__(self, sizes):
+
+
+
+class GroupMember(Container, Element):
+  def __init__(self, g, i):
+    Container.__init__(self)
+    self.parent=g
+    self.i=i
+
+  @property
+  def pos(self):
+    return self.parent.posOf(self.i)
+
+  @property
+  def size(self):
+    return self.parent.sizeOf(self.i)
+
+
+
+class Group(Element):
+  def __init__(self):
+    raise NotImplemented()
+
+  @staticmethod
+  def makesizes(sizes, psize):
     t=sum(sizes)
-    p=self.parent.size[0]
-    self.sizes=[]
+    psize
+    outsizes=[]
     for s in sizes:
-      x=int(s/t*p+.5)
-      self.sizes.append(x)
-      p-=x
+      x=int(s/t*psizes+.5)
+      outsizes.append(x)
+      psizes-=x
       t-=s
 
+  def getMember(self, i):
+    return self.members[i]
+
   def draw(self, draw):
-      display.textbox(draw, self.text, size=self.parent.size, center=self.parent.center, fill = 0)
-    
+    for m in self.members:
+      try:
+        m.draw(draw)
+      except:
+         traceback.print_exc(file=sys.stderr)
+
+
+class HGroup(Group):
+  def __init__(self, sizes):
+    self.sizes = self.makesizes(sizes, self.parent.size[0])
+    self.members=[GroupMember(self, i) for i in xrange(len(self.sizes))]
+
+  def posOf(self, i):
+    return self.pos[0]+sum(self.sizes[:i]), self.pos[1]
+
+  def sizeOf(self, i):
+    return self.sizes[i],self.size[1]
+
+
+class VGroup(Group):
+  def __init__(self, sizes):
+    self.sizes = self.makesizes(sizes, self.parent.size[1])
+    self.members=[GroupMember(self, i) for i in xrange(len(self.sizes))]
+
+  def posOf(self, i):
+    return self.pos[0], self.pos[1]+sum(self.sizes[:i])
+
+  def sizeOf(self, i):
+    return self.size[0],self.sizes[i]
+
+
 
 
 
