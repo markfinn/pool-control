@@ -4,7 +4,7 @@ import thermocouple
 import clock
 import time
 
-
+ThreadedImageStreamServer
 def main(dummy):
     if not dummy:
       g=gui.GuiScreen((1,0))
